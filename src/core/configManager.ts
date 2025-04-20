@@ -1,10 +1,3 @@
-// LEDIM/src/core/configManager.ts
-//--------------------------------------------------------------
-// Loads the user's JSON configuration and returns a typed
-// object.  You can override the path at runtime via the
-// CONFIG_PATH environment variable.
-//--------------------------------------------------------------
-
 import fs from "fs";
 import path from "path";
 
@@ -26,13 +19,32 @@ export interface LEDIMConfig {
   modules: Record<string, unknown>;
 }
 
-export function loadConfig(): LEDIMConfig {
-  const cfgPath = process.env.CONFIG_PATH ?? path.resolve(__dirname, "../../config/default.json");
+function loadJSON(filePath: string): any {
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+  const raw = fs.readFileSync(filePath, "utf-8");
+  return JSON.parse(raw);
+}
 
-  if (!fs.existsSync(cfgPath)) {
-    throw new Error(`Config file not found: ${cfgPath}`);
+export function loadConfig(): LEDIMConfig {
+  const configDir = path.resolve(__dirname, "../../config");
+
+  const userConfigPath = process.env.CONFIG_PATH ?? path.join(configDir, "user_defaults.json");
+  const projectDefaultsPath = path.join(configDir, "project_defaults.json");
+
+  const userConfig = loadJSON(userConfigPath);
+  const projectDefaults = loadJSON(projectDefaultsPath);
+
+  if (!userConfig && !projectDefaults) {
+    throw new Error(`No usable config found. Checked: ${userConfigPath} and ${projectDefaultsPath}`);
   }
 
-  const raw = fs.readFileSync(cfgPath, "utf-8");
-  return JSON.parse(raw) as LEDIMConfig;
+  // Merge userConfig over projectDefaults
+  const mergedConfig = {
+    ...(projectDefaults || {}),
+    ...(userConfig || {}),
+  };
+
+  return mergedConfig as LEDIMConfig;
 }
