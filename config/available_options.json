@@ -1,0 +1,10 @@
+{
+    "matrix_counts": [1, 2, 3],
+    "modules": ["weather", "news", "clock", "traffic"],
+    "fonts": ["5x8", "7x13", "10x20", "12x24"],
+    "area_layouts": [
+      { "name": "Half & Half", "top": 32, "bottom": 32 },
+      { "name": "Top Heavy", "top": 48, "bottom": 16 }
+    ]
+  }
+  

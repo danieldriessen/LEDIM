@@ -1,0 +1,12 @@
+{
+    "matrix_count": 1,
+    "virtual_areas": [
+      { "name": "Top", "height": 32 },
+      { "name": "Bottom", "height": 32 }
+    ],
+    "modules_enabled": ["weather", "news"],
+    "fonts": {
+      "default": "7x13"
+    }
+  }
+  
