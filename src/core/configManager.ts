@@ -3,9 +3,9 @@ import path from "path";
 
 export interface LEDIMConfig {
   matrix: {
-    rows: 16 | 32 | 64;
-    cols: 16 | 32 | 40 | 64;
-    chainLength?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+    rows: 64;
+    cols: 128 | 256 | 384 | 512;
+    chainLength: 1 | 2 | 3;
     pwmBits?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
   };
   areas: Array<{
@@ -14,37 +14,65 @@ export interface LEDIMConfig {
     y: number;
     w: number;
     h: number;
-    module: string;
+    module?: string;
   }>;
   modules: Record<string, unknown>;
 }
 
-function loadJSON(filePath: string): any {
-  if (!fs.existsSync(filePath)) {
-    return null;
+// ------------------ Config Search Logic ------------------
+const ETC_DIR = "/etc/ledim";
+const LOCAL_DIR = path.resolve(__dirname, "../../config");
+
+function getConfigPath(filename: string): string {
+  const envDir = process.env.LEDIM_CONFIG_DIR;
+  if (envDir && fs.existsSync(path.join(envDir, filename))) {
+    return path.join(envDir, filename);
   }
-  const raw = fs.readFileSync(filePath, "utf-8");
-  return JSON.parse(raw);
+
+  if (fs.existsSync(path.join(ETC_DIR, filename))) {
+    return path.join(ETC_DIR, filename);
+  }
+
+  return path.join(LOCAL_DIR, filename); // fallback
 }
 
-export function loadConfig(): LEDIMConfig {
-  const configDir = path.resolve(__dirname, "../../config");
+function loadJSON(filePath: string): any {
+  if (!fs.existsSync(filePath)) {
+    console.warn(`⚠️ Config file not found: ${filePath}`);
+    return null;
+  }
 
-  const userConfigPath = process.env.CONFIG_PATH ?? path.join(configDir, "user_defaults.json");
-  const projectDefaultsPath = path.join(configDir, "project_defaults.json");
+  const raw = fs.readFileSync(filePath, "utf-8").trim();
+
+  if (!raw) {
+    console.warn(`⚠️ Config file is empty: ${filePath}`);
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error(`❌ Failed to parse JSON in ${filePath}:\n`, err);
+    return null;
+  }
+}
+
+// ------------------ Exported Loader ------------------
+export function loadConfig(): LEDIMConfig {
+  const userConfigPath = getConfigPath("user_defaults.json");
+  const projectDefaultsPath = getConfigPath("project_defaults.json");
 
   const userConfig = loadJSON(userConfigPath);
   const projectDefaults = loadJSON(projectDefaultsPath);
 
   if (!userConfig && !projectDefaults) {
-    throw new Error(`No usable config found. Checked: ${userConfigPath} and ${projectDefaultsPath}`);
+    throw new Error(
+      `No usable config found.\nChecked:\n - ${userConfigPath}\n - ${projectDefaultsPath}`
+    );
   }
 
-  // Merge userConfig over projectDefaults
-  const mergedConfig = {
+  return {
     ...(projectDefaults || {}),
     ...(userConfig || {}),
-  };
-
-  return mergedConfig as LEDIMConfig;
+  } as LEDIMConfig;
 }

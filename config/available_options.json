@@ -2,7 +2,8 @@
     "matrix_counts": [1, 2, 3],
     "modules": ["weather", "news", "clock"],
     "fonts": ["5x8", "7x13", "10x20", "12x24"],
-    "area_layouts": [
+    "area_layouts": {
+      "1": [
         {
           "id": "full",
           "name": "Full Panel",
@@ -12,7 +13,7 @@
           ]
         },
         {
-          "id": "split-vertical",
+          "id": "split-horizontal",
           "name": "Top & Bottom",
           "description": "Split vertically into two areas",
           "areas": [
@@ -21,14 +22,72 @@
           ]
         },
         {
-            "id": "split-horizontal",
-            "name": "Left & Right",
-            "description": "Split horizontally into two areas",
-            "areas": [
-              { "name": "left", "x": 0, "y": 0, "w": 128, "h": 32 },
-              { "name": "right", "x": 0, "y": 32, "w": 128, "h": 32 }
-            ]
-          }
+          "id": "split-vertical",
+          "name": "Left & Right",
+          "description": "Split horizontally into two areas",
+          "areas": [
+            { "name": "left", "x": 0, "y": 0, "w": 64, "h": 64 },
+            { "name": "right", "x": 64, "y": 0, "w": 64, "h": 64 }
+          ]
+        }
+      ],
+      "2": [
+        {
+          "id": "two-full",
+          "name": "Full Width (2 Panels)",
+          "description": "One area across 256x64",
+          "areas": [
+            { "name": "main", "x": 0, "y": 0, "w": 256, "h": 64 }
+          ]
+        },
+        {
+          "id": "split-horizontal",
+          "name": "Top & Bottom",
+          "description": "Two stacked horizontal areas",
+          "areas": [
+            { "name": "top", "x": 0, "y": 0, "w": 256, "h": 32 },
+            { "name": "bottom", "x": 0, "y": 32, "w": 256, "h": 32 }
+          ]
+        },
+        {
+          "id": "split-vertical",
+          "name": "Left & Right",
+          "description": "Two vertical sections (2x128)",
+          "areas": [
+            { "name": "left", "x": 0, "y": 0, "w": 128, "h": 64 },
+            { "name": "right", "x": 128, "y": 0, "w": 128, "h": 64 }
+          ]
+        }
+      ],
+      "3": [
+        {
+          "id": "three-full",
+          "name": "Full Width (3 Panels)",
+          "description": "One area across 384x64",
+          "areas": [
+            { "name": "main", "x": 0, "y": 0, "w": 384, "h": 64 }
+          ]
+        },
+        {
+          "id": "three-columns",
+          "name": "3 Columns",
+          "description": "Split into 3 vertical sections",
+          "areas": [
+            { "name": "left", "x": 0, "y": 0, "w": 128, "h": 64 },
+            { "name": "middle", "x": 128, "y": 0, "w": 128, "h": 64 },
+            { "name": "right", "x": 256, "y": 0, "w": 128, "h": 64 }
+          ]
+        },
+        {
+          "id": "split-horizontal",
+          "name": "Top & Bottom",
+          "description": "Two stacked full-width areas",
+          "areas": [
+            { "name": "top", "x": 0, "y": 0, "w": 384, "h": 32 },
+            { "name": "bottom", "x": 0, "y": 32, "w": 384, "h": 32 }
+          ]
+        }
       ]
+    }
   }
   

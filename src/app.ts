@@ -1,23 +1,47 @@
 // LEDIM/src/app.ts
-// ------------------------------------------------------------
-// Entry point for the LED‑Info‑Matrix runtime. It loads the
-// compiled configuration, initializes the LED matrix driver,
-// and hands off to the AreaManager which in turn calls each
-// active module on every frame. Runs setup mode on first launch.
-// ------------------------------------------------------------
-
 import fs from "fs";
 import path from "path";
-import { LedMatrix, LedMatrixInstance, MatrixOptions, RuntimeOptions } from "rpi-led-matrix";
+import {
+  LedMatrix,
+  LedMatrixInstance,
+  MatrixOptions,
+  RuntimeOptions
+} from "rpi-led-matrix";
 import { loadConfig } from "./core/configManager";
 import { AreaManager } from "./core/areaManager";
 import { runSetup } from "./setup/setup";
 
-async function main() {
-  const systemStatePath = path.resolve(__dirname, "../config/system_state.json");
+// ✅ Inject CLI flag to avoid root requirement (must come before any matrix init)
+if (!process.argv.includes("--led-no-hardware-pulse")) {
+  process.argv.push("--led-no-hardware-pulse");
+}
 
-  const needsSetup = !fs.existsSync(systemStatePath)
-    || JSON.parse(fs.readFileSync(systemStatePath, 'utf-8')).initialSetupComplete !== true;
+// 🔒 Only allow supported 128x64 panel configs
+function assertValidMatrixConfig(
+  rows: number,
+  cols: number,
+  chainLength: number,
+  pwmBits: number
+): asserts rows is 64 {
+  const validRows = [64];
+  const validCols = [128, 256, 384, 512];
+  const validChain = [1, 2, 3];
+  const validPwm = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+  if (!validRows.includes(rows)) throw new Error(`Invalid matrix.rows: ${rows}`);
+  if (!validCols.includes(cols)) throw new Error(`Invalid matrix.cols: ${cols}`);
+  if (!validChain.includes(chainLength)) throw new Error(`Invalid chainLength: ${chainLength}`);
+  if (!validPwm.includes(pwmBits)) throw new Error(`Invalid pwmBits: ${pwmBits}`);
+}
+
+async function main() {
+  const etcStatePath = "/etc/ledim/system_state.json";
+  const localFallbackPath = path.resolve(__dirname, "../config/system_state.json");
+  const statePath = fs.existsSync(etcStatePath) ? etcStatePath : localFallbackPath;
+
+  const needsSetup =
+    !fs.existsSync(statePath) ||
+    JSON.parse(fs.readFileSync(statePath, "utf-8")).initialSetupComplete !== true;
 
   if (needsSetup) {
     await runSetup();
@@ -25,23 +49,38 @@ async function main() {
 
   const cfg = loadConfig();
 
+  const rows = Number(cfg.matrix.rows);
+  const virtualCols = Number(cfg.matrix.cols);
+  const chainLength = Number(cfg.matrix.chainLength ?? 2);
+  const pwmBits = Number(cfg.matrix.pwmBits ?? 11);
+
+  assertValidMatrixConfig(rows, virtualCols, chainLength, pwmBits);
+
   const matrixOpts: MatrixOptions = {
     ...LedMatrix.defaultMatrixOptions(),
-    rows:        cfg.matrix.rows        as 16 | 32 | 64,
-    cols:        cfg.matrix.cols        as 16 | 32 | 40 | 64,
-    chainLength: (cfg.matrix.chainLength ?? 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
-    pwmBits:     (cfg.matrix.pwmBits    ?? 11) as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11,
+    rows: 64,
+    cols: 64, // always fixed at 64 per panel
+    chainLength: (virtualCols / 128) as 1 | 2 | 3,
+    pwmBits: pwmBits as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
   };
 
   const runtimeOpts: RuntimeOptions = {
     ...LedMatrix.defaultRuntimeOptions(),
-    gpioSlowdown: 2,
+    gpioSlowdown: 2
   };
 
   const matrix: LedMatrixInstance = new LedMatrix(matrixOpts, runtimeOpts);
-  const areaManager = new AreaManager(matrix, cfg.areas, cfg.modules);
 
-  if (areaManager.initModules) await areaManager.initModules();
+  const areas = cfg.areas.map(area => ({
+    ...area,
+    module: area.module ?? "clock"
+  }));
+
+  const areaManager = new AreaManager(matrix, areas, cfg.modules);
+
+  if (areaManager.initModules) {
+    await areaManager.initModules();
+  }
 
   setInterval(async () => {
     try {

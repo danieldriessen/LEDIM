@@ -6,7 +6,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "start": "ts-node src/app.ts"
+    "start": "ts-node src/app.ts",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
