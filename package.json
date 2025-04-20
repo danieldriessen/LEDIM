@@ -16,6 +16,7 @@
     "@types/node": "^22.14.1",
     "axios": "^1.8.4",
     "dotenv": "^16.5.0",
+    "enquirer": "^2.4.1",
     "express": "^5.1.0",
     "mqtt": "^5.11.0",
     "rpi-led-matrix": "^1.15.0",

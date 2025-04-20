@@ -1,16 +1,28 @@
 // LEDIM/src/app.ts
 // ------------------------------------------------------------
-// Entry point for the LED‑Info‑Matrix runtime.  It loads the
-// compiled configuration, initialises the LED matrix driver,
+// Entry point for the LED‑Info‑Matrix runtime. It loads the
+// compiled configuration, initializes the LED matrix driver,
 // and hands off to the AreaManager which in turn calls each
-// active module on every frame.
+// active module on every frame. Runs setup mode on first launch.
 // ------------------------------------------------------------
 
+import fs from "fs";
+import path from "path";
 import { LedMatrix, LedMatrixInstance, MatrixOptions, RuntimeOptions } from "rpi-led-matrix";
 import { loadConfig } from "./core/configManager";
 import { AreaManager } from "./core/areaManager";
+import { runSetup } from "./setup/setup";
 
 async function main() {
+  const systemStatePath = path.resolve(__dirname, "../config/system_state.json");
+
+  const needsSetup = !fs.existsSync(systemStatePath)
+    || JSON.parse(fs.readFileSync(systemStatePath, 'utf-8')).initialSetupComplete !== true;
+
+  if (needsSetup) {
+    await runSetup();
+  }
+
   const cfg = loadConfig();
 
   const matrixOpts: MatrixOptions = {
