@@ -1,0 +1,25 @@
+{
+  "name": "ledim",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "ts-node src/app.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/node": "^22.14.1",
+    "axios": "^1.8.4",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "mqtt": "^5.11.0",
+    "rpi-led-matrix": "^1.15.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
